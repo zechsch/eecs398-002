@@ -1,11 +1,9 @@
 /*
-
      KinEval
      Implementation of robot kinematics, control, decision making, and dynamics 
      in HTML5/JavaScript and threejs
      
      @author ohseejay / https://github.com/ohseejay / https://bitbucket.org/ohseejay
-
 */
 
 
@@ -76,24 +74,29 @@ function startingPlaceholderAnimate() {
     if (keyboard.pressed("x")) {
         textbar.innerHTML = "moving on up";  // make the pieces move up
     // STENCIL: update the vertical offset variable
+        vert_offset = vert_offset + 0.1;
     }
     else if (keyboard.pressed("z")) {
         textbar.innerHTML = "relax your mind, let your conscience be free";  // stop jittering the pieces
     // STENCIL: update the radius of the jittering
+        jitter_radius = 0;
     }
     else if (keyboard.pressed("shift+1")) { 
         textbar.innerHTML = "get a move on";  // increase spacing
     // STENCIL: update the global spacing variable
+        global_spacing = global_spacing + 0.1;
     }
     else if (keyboard.pressed("1")) {
         textbar.innerHTML = "come together";  // decrease spacing
     // STENCIL: update the global spacing variable
+        global_spacing = global_spacing - 0.1;
     }
     else {
         // make the pieces jitter, and say something more interesting
-        textbar.innerHTML = "Welcome to KinEval. I want to see some text. Can you place a message here?";  // set message text
+        textbar.innerHTML = "Welcome to KinEval. I'm Zechariah (Zack) Schneider, and I'm new to Javascript";  // set message text
         vert_offset = 1;
         jitter_radius = 0.2;
+        global_spacing = 0.9;
     }
 
     // CREATE TRANSFORMATION MATRIX
@@ -142,5 +145,4 @@ function startingPlaceholderAnimate() {
     } 
 
 } 
-
 
