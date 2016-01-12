@@ -74,8 +74,9 @@ function startingPlaceholderAnimate() {
     if (keyboard.pressed("x")) {
         textbar.innerHTML = "moving on up";  // make the pieces move up
     // STENCIL: update the vertical offset variable
-        vert_offset = vert_offset + 0.1;
+        vert_offset = vert_offset + 0.05;
     }
+    
     else if (keyboard.pressed("z")) {
         textbar.innerHTML = "relax your mind, let your conscience be free";  // stop jittering the pieces
     // STENCIL: update the radius of the jittering
@@ -84,12 +85,15 @@ function startingPlaceholderAnimate() {
     else if (keyboard.pressed("shift+1")) { 
         textbar.innerHTML = "get a move on";  // increase spacing
     // STENCIL: update the global spacing variable
-        global_spacing = global_spacing + 0.1;
+        global_spacing = global_spacing + 0.05;
     }
     else if (keyboard.pressed("1")) {
         textbar.innerHTML = "come together";  // decrease spacing
     // STENCIL: update the global spacing variable
-        global_spacing = global_spacing - 0.1;
+        global_spacing = global_spacing - 0.05;
+        if(global_spacing < 0){
+            global_spacing = 0;
+        }
     }
     else {
         // make the pieces jitter, and say something more interesting
