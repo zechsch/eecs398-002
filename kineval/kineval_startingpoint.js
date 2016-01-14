@@ -71,16 +71,26 @@ function startingPlaceholderAnimate() {
     // HANDLE USER KEY INTERACTION
 
     // keyboard is threejs helper for reading keyboard state
-    if (keyboard.pressed("x")) {
+    if (keyboard.pressed("shift+x")){
+        textbar.innerHTML = "going down";
+        vert_offset = vert_offset - 0.05;
+        if(vert_offset < 0)
+            vert_offset = 0;
+    }
+    else if (keyboard.pressed("x")) {
         textbar.innerHTML = "moving on up";  // make the pieces move up
     // STENCIL: update the vertical offset variable
         vert_offset = vert_offset + 0.05;
     }
+    //shift down
     
     else if (keyboard.pressed("z")) {
         textbar.innerHTML = "relax your mind, let your conscience be free";  // stop jittering the pieces
     // STENCIL: update the radius of the jittering
-        jitter_radius = 0;
+        jitter_radius = jitter_radius - 0.01;
+        if(jitter_radius < 0){
+            jitter_radius = 0;
+        }
     }
     else if (keyboard.pressed("shift+1")) { 
         textbar.innerHTML = "get a move on";  // increase spacing
