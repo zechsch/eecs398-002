@@ -71,19 +71,27 @@ function startingPlaceholderAnimate() {
     // HANDLE USER KEY INTERACTION
 
     // keyboard is threejs helper for reading keyboard state
+    //shift pieces down
     if (keyboard.pressed("shift+x")){
         textbar.innerHTML = "going down";
         vert_offset = vert_offset - 0.05;
         if(vert_offset < 0)
             vert_offset = 0;
     }
+    //move them up
     else if (keyboard.pressed("x")) {
         textbar.innerHTML = "moving on up";  // make the pieces move up
     // STENCIL: update the vertical offset variable
         vert_offset = vert_offset + 0.05;
     }
-    //shift down
-    
+
+    //make pieces really jittery
+    else if (keyboard.pressed("shift+z")) {
+        textbar.innerHTML = "entropy is real, man";  // increase jittering radius
+    // STENCIL: update the radius of the jittering
+        jitter_radius = jitter_radius + 0.01;
+    }
+    //still pieces
     else if (keyboard.pressed("z")) {
         textbar.innerHTML = "relax your mind, let your conscience be free";  // stop jittering the pieces
     // STENCIL: update the radius of the jittering
@@ -92,11 +100,13 @@ function startingPlaceholderAnimate() {
             jitter_radius = 0;
         }
     }
+    //move farther appart
     else if (keyboard.pressed("shift+1")) { 
         textbar.innerHTML = "get a move on";  // increase spacing
     // STENCIL: update the global spacing variable
         global_spacing = global_spacing + 0.05;
     }
+    //move to zero distance between
     else if (keyboard.pressed("1")) {
         textbar.innerHTML = "come together";  // decrease spacing
     // STENCIL: update the global spacing variable
