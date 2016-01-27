@@ -74,6 +74,12 @@ function init() {
     t = 0;
     dt = 0.05;  // default
 
+    //set up sum for i term & derivative stuff
+    error = 0;
+    sumError = 0;
+    prevError = 0;
+    errorDerivative = 0;
+
     // initialize method of numerical integration of dynamics
     //numerical_integrator = "euler";
     //numerical_integrator = "verlet";
@@ -87,6 +93,11 @@ function init() {
     servo_active_state = {}; // string with current state of servo activation
 
     t += dt;
+
+    document.addEventListener('keydown', function(e) {
+      if (e.keyCode == 88)  // 'x' == 88
+         servo_active_persist = !servo_active_persist;
+  }, true);
 
     // initialize rendering scene and user interface
     createScene();
@@ -121,9 +132,12 @@ function animate() {
 
     // update servo desired state from user interaction
     if ( keyboard.pressed("e") )
-        pendulum.desired += 0.05; // move the desired angle for the servo
+        pendulum.desired = (pendulum.desired + 0.05)%(2*Math.PI); // move the desired angle for the servo
+
     if ( keyboard.pressed("q") )
-        pendulum.desired += -0.05; // move the desired angle for the servo
+        pendulum.desired = (pendulum.desired - 0.05)%(2*Math.PI); // move the desired angle for the servo
+    pendulum.angle = pendulum.angle%(2*Math.PI);
+
 
 
     // add user force from user interaction
@@ -132,27 +146,36 @@ function animate() {
     else if ( keyboard.pressed("a") )
         pendulum.control += -50.0; // add a motor force to the pendulum motor
 
+    pendulum.servo.kp = 360;
+    pendulum.servo.ki = 10;
+    pendulum.servo.kd = 72;
+
+    prevError = error;
+    error = pendulum.desired - pendulum.angle;
+    errorDerivative = (error-prevError)/dt;
+
+    sumError += error;
+
+
+    pendulum.control = (pendulum.servo.kp * error) + (sumError * pendulum.servo.ki) + (pendulum.servo.kd * errorDerivative);
     // STENCIL: implement servo controller
-    if(keyboard.pressed("c")){
-        servo_active_persist = true;
-        servo_active_state = "active"
-        pendulum.servo.kp = 1;
-        pendulum.servo.ki = 1;
-        pendulum.servo.kd = 1;
-    }
+
+    if(keyboard.pressed("c"))
+        servo_active_persist = !servo_active_persist;
 
     // disable motor from user interaction
     if (keyboard.pressed("s")||!servo_active_persist) {
         servo_active_persist = false;
         pendulum.control = 0;
         accumulated_error = 0;
+        prevError = 0;
+        error = 0;
+        errorDerivative = 0;
+        sumError = 0;
         servo_active_state = "disabled";
     }
-
-    if(servo_active_persist){
-        error = pendulum.desired - pendulum.angle;
-        
-    }
+    else
+        servo_active_state = "active"
 
 
     // integrate pendulum state forward in time by dt
@@ -161,8 +184,9 @@ function animate() {
 
     if (numerical_integrator === "euler") {
         pendulum.angle_doubleDot = pendulum_acceleration(pendulum, g);
-        pendulum.angle_dot += (dt * pendulum.angle_doubleDot);
         pendulum.angle += (dt * pendulum.angle_dot);
+        pendulum.angle_dot += (dt * pendulum.angle_doubleDot);
+
     }
     else if (numerical_integrator === "verlet") {
         pendulum.angle_doubleDot = 0;
