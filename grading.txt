@@ -1,13 +1,18 @@
 34: Schneider,Zechariah James
 EECS 398-002 W16
-Assignment 0: PENDING
-Assignment 1: PENDING
-Assignment 2: PENDING
+Assignment 1: CHECK
+comment: good work
+Assignment 2: DUE
+error: servo controller does not converge on all tests
+comment: convergence equilibrium osciallates about desired state
+comment: double check scoping of variables
+comment: we should discuss servo behavior during office hours
 Assignment 3: PENDING
 Assignment 4: PENDING
 Assignment 5: PENDING
 Assignment 6: PENDING
-Quiz 0: PENDING
+Assignment 7: PENDING
 Quiz 1: PENDING
 Quiz 2: PENDING
 Quiz 3: PENDING
+Quiz 4: PENDING
