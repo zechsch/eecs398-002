@@ -136,7 +136,7 @@ function animate() {
 
     if ( keyboard.pressed("q") )
         pendulum.desired = (pendulum.desired - 0.05); // move the desired angle for the servo
-
+    //pendulum.angle = pendulum.angle%(2*Math.PI);
 
 
 
@@ -148,7 +148,7 @@ function animate() {
 
     pendulum.servo.kp = 360;
     pendulum.servo.ki = 5;
-    pendulum.servo.kd = 85;
+    pendulum.servo.kd = 72;
 
     prevError = error;
     error = pendulum.desired - pendulum.angle;
@@ -161,7 +161,7 @@ function animate() {
     // STENCIL: implement servo controller
 
     if(keyboard.pressed("c"))
-        servo_active_persist = true;
+        servo_active_persist = !servo_active_persist;
 
     // disable motor from user interaction
     if (keyboard.pressed("s")||!servo_active_persist) {
@@ -228,7 +228,7 @@ function animate() {
     }
     else {
         pendulum.angle_previous = pendulum.angle;
-        pendulum.angle = (pendulum.angle+Math.PI/180);
+        pendulum.angle = (pendulum.angle+Math.PI/180)%(2*Math.PI);
         pendulum.angle_dot = (pendulum.angle-pendulum.angle_previous)/dt;
         numerical_integrator = "none";
     }

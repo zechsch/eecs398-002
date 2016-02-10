@@ -22,23 +22,13 @@ function matrix_copy(m1) {
     //   matrix_multiply
     function matrix_multiply(A, B){
 
-        var ma,na,mb,nb;
-        ma = A.length;
-        na = A[0].length;
-        mb = B.length;
-        nb = B[0].length;
-
-        if(na != mb){
-            throw "Error: incompatible sizes."
-        }
-
         var result = [];
-        for(i = 0; i < ma; ++i){
+        for(var i = 0; i < 4; ++i){
             result[i] = [];
-            for(j = 0; j < nb; ++j){
+            for(var j = 0; j < 4; ++j){
                 var sum = 0;
-                for(k = 0; k < na; ++k){
-                    sum += A[i][k] * B[k][j];
+                for(var k = 0; k < 4; ++k){
+                    sum += (A[i][k] * B[k][j]);
                 }
                 result[i][j] = sum;
             }
@@ -92,25 +82,51 @@ function matrix_copy(m1) {
 
     //   generate_identity
     function generate_identity(n){
-
-        var current = 0;
         var mat = [];
 
         for(i = 0; i < n; ++i){
             mat[i] = [];
             for(j = 0; j < n; ++j){
-                if (j == current){
-                    mat[i][j] = 1;
-                    ++current;
+                if (j == i){
+                    mat[j][j] = 1;
                 }
                 else {
                     mat[i][j] = 0;
                 }
             }
         }
+        return mat;
     }
 
     //   generate_translation_matrix
+    function generate_translation_matrix(dst){
+        
+        return [ [1, 0, 0, dst[0] ],
+                 [0, 1, 0, dst[1] ],
+                 [0, 0, 1, dst[2] ],
+                 [0, 0, 0, 1]     ];
+    }
+
     //   generate_rotation_matrix_X
+    function generate_rotation_matrix_X(theta){
+        return [ [1, 0, 0, 0 ],
+                 [0, Math.cos(theta), -1*Math.sin(theta), 0],
+                 [0, Math.sin(theta), Math.cos(theta), 0],
+                 [0, 0, 0, 1] ];
+    }
+
     //   generate_rotation_matrix_Y
+    function generate_rotation_matrix_Y(theta){
+        return [ [Math.cos(theta), 0, Math.sin(theta), 0 ],
+                 [0, 1, 0, 0],
+                 [-1*Math.sin(theta), 0, Math.cos(theta), 0],
+                 [0, 0, 0, 1] ];
+    }
+
     //   generate_rotation_matrix_Z
+    function generate_rotation_matrix_Z(theta){
+        return [ [Math.cos(theta), -1*Math.sin(theta), 0, 0 ],
+                 [Math.sin(theta), Math.cos(theta), 0, 0],
+                 [0, 0, 1, 0],
+                 [0, 0, 0, 1] ];
+    }
