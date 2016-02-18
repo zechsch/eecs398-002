@@ -79,17 +79,12 @@ function init() {
     sumError = 0;
     prevError = 0;
     errorDerivative = 0;
-
-    // initialize method of numerical integration of dynamics
-    //numerical_integrator = "euler";
-    //numerical_integrator = "verlet";
-    //numerical_integrator = "velocity verlet";
-    //numerical_integrator = "runge-kutta";
+    numerical_integrator = "velocity verlet";
 
     // OPTIONAL servo controller additional features
     steady_state_error_reset = false; // integral term resets after desired met
     servo_error_threshold = 0.001; // threshold for achieving desired
-    servo_active_persist = false; // toggle to turn on servo controller
+    servo_active_persist = true; // toggle to turn on servo controller
     servo_active_state = {}; // string with current state of servo activation
 
     t += dt;
@@ -132,11 +127,11 @@ function animate() {
 
     // update servo desired state from user interaction
     if ( keyboard.pressed("e") )
-        pendulum.desired = (pendulum.desired + 0.05)%(2*Math.PI); // move the desired angle for the servo
+        pendulum.desired = (pendulum.desired + 0.05); // move the desired angle for the servo
 
     if ( keyboard.pressed("q") )
-        pendulum.desired = (pendulum.desired - 0.05)%(2*Math.PI); // move the desired angle for the servo
-    pendulum.angle = pendulum.angle%(2*Math.PI);
+        pendulum.desired = (pendulum.desired - 0.05); // move the desired angle for the servo
+    //pendulum.angle = pendulum.angle%(2*Math.PI);
 
 
 
@@ -145,10 +140,19 @@ function animate() {
         pendulum.control += 50.0;  // add a motor force to the pendulum motor
     else if ( keyboard.pressed("a") )
         pendulum.control += -50.0; // add a motor force to the pendulum motor
-
+/*
     pendulum.servo.kp = 360;
-    pendulum.servo.ki = 10;
+    pendulum.servo.ki = 5;
     pendulum.servo.kd = 72;
+*/
+    /*
+    pendulum.servo.kp = 61;
+    pendulum.servo.kd = 50;
+    pendulum.servo.ki = 21;
+*/
+pendulum.servo.kp = 90;
+pendulum.servo.kd = 60;
+pendulum.servo.ki = 20;
 
     prevError = error;
     error = pendulum.desired - pendulum.angle;
@@ -177,6 +181,23 @@ function animate() {
     else
         servo_active_state = "active"
 
+    /*if(servo_active_persist){
+        pendulum.servo.kp = 400;
+        pendulum.servo.ki = 5;
+        pendulum.servo.kd = 60;
+
+        prevError = error;
+        error = pendulum.desired - pendulum.angle;
+        errorDerivative = (error-prevError)/dt;
+
+        sumError += error;
+
+
+        pendulum.control = (pendulum.servo.kp * error) + (sumError * pendulum.servo.ki) + (pendulum.servo.kd * errorDerivative);
+
+
+    }
+*/
 
     // integrate pendulum state forward in time by dt
     if (typeof numerical_integrator === "undefined")
@@ -211,7 +232,7 @@ function animate() {
     }
     else {
         pendulum.angle_previous = pendulum.angle;
-        pendulum.angle = (pendulum.angle+Math.PI/180)%(2*Math.PI);
+        pendulum.angle = (pendulum.angle+Math.PI/180);
         pendulum.angle_dot = (pendulum.angle-pendulum.angle_previous)/dt;
         numerical_integrator = "none";
     }
