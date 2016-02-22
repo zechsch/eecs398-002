@@ -2,12 +2,14 @@
 EECS 398-002 W16
 Assignment 1: CHECK
   comment: good work
-Assignment 2: DUE
+Assignment 2: CHECK
   error: servo controller does not converge on all tests
   comment: convergence equilibrium osciallates about desired state
   comment: double check scoping of variables
   comment: we should discuss servo behavior during office hours
-Assignment 3: PENDING
+  regrade: working
+Assignment 3: CHECK
+  comment: good work
 Assignment 4: PENDING
 Assignment 5: PENDING
 Assignment 6: PENDING
