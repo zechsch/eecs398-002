@@ -2,20 +2,20 @@
 /////     MATRIX ALGEBRA AND GEOMETRIC TRANSFORMS
 //////////////////////////////////////////////////
 
-function matrix_copy(m1) {
-    // returns 2D array that is a copy of m1
+    function matrix_copy(m1) {
+        // returns 2D array that is a copy of m1
 
-    var mat = [];
-    var i,j;
+        var mat = [];
+        var i,j;
 
-    for (i=0;i<m1.length;i++) { // for each row of m1
-        mat[i] = [];
-        for (j=0;j<m1[0].length;j++) { // for each column of m1
-            mat[i][j] = m1[i][j];
+        for (i=0;i<m1.length;i++) { // for each row of m1
+            mat[i] = [];
+            for (j=0;j<m1[0].length;j++) { // for each column of m1
+                mat[i][j] = m1[i][j];
+            }
         }
+        return mat;
     }
-    return mat;
-}
 
 
     // STENCIL: reference matrix code has the following functions:
@@ -38,19 +38,21 @@ function matrix_copy(m1) {
     //   matrix_transpose
     function matrix_transpose(A){
         var m,n;
-        m = A.length;
-        n = A[0].length;
+        m = 1;
+        n = 4;
 
-        var result = [];
+        var result = new Array(n);
 
-        for(i = 0; i < m; ++i){
-            var row = A[i];
-            for(j = 0; j < row.length; ++j){
-                result[j][i] = row[j];
+        for(var i = 0; i < n; ++i)
+            result[i] = new Array(m);
+
+        for(var i = 0; i < n; ++i){
+            for(var j = 0; j < m; ++j){
+                result[i][j] = A[i];
             }
         }
+        //console.log(result);
         return result;
-
     }
 
     //   matrix_pseudoinverse (IK)
@@ -61,9 +63,8 @@ function matrix_copy(m1) {
 
         var amplitude = Math.abs(Math.sqrt((vec[0]*vec[0]) + (vec[1]*vec[1]) + (vec[2]*vec[2])));
 
-        vec[0] /= amplitude;
-        vec[1] /= amplitude;
-        vec[2] /= amplitude;
+        for(var i = 0; i < vec.length; ++i)
+            vec[i] /= amplitude;
 
         return vec;
     }
@@ -100,7 +101,7 @@ function matrix_copy(m1) {
 
     //   generate_translation_matrix
     function generate_translation_matrix(dst){
-        
+
         return [ [1, 0, 0, dst[0] ],
                  [0, 1, 0, dst[1] ],
                  [0, 0, 1, dst[2] ],

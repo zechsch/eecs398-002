@@ -3,9 +3,9 @@
 
     KinEval | Kinematic Evaluator | update robot state from controls
 
-    Implementation of robot kinematics, control, decision making, and dynamics 
+    Implementation of robot kinematics, control, decision making, and dynamics
         in HTML5/JavaScript and threejs
-     
+
     @author ohseejay / https://github.com/ohseejay / https://bitbucket.org/ohseejay
 
     Chad Jenkins
@@ -24,6 +24,7 @@ kineval.applyControls = function robot_apply_controls() {
     for (x in robot.joints) {
         if (isNaN(robot.joints[x].control))
             console.warn("kineval: control value for " + x +" is a nan"); //+robot.joints[x].control);
+            
 
         // update joint angles
         robot.joints[x].angle += robot.joints[x].control;
@@ -52,6 +53,5 @@ kineval.applyControls = function robot_apply_controls() {
     camera_controls.object.position.z += robot.control.xyz[2];
 
     // zero controls now that they have been applied to robot
-    robot.control = {xyz: [0,0,0], rpy:[0,0,0]}; 
+    robot.control = {xyz: [0,0,0], rpy:[0,0,0]};
 }
-

@@ -22,7 +22,6 @@ kineval.robotForwardKinematics = function robotForwardKinematics () {
         textbar.innerHTML = "forward kinematics not implemented";
         return;
     }
-    textbar.innerHTML = "Let's build a robot!";
 
     // STENCIL: implement kineval.buildFKTransforms();
     kineval.buildFKTransforms();
@@ -47,9 +46,14 @@ function traverseFKBase(xform, link){
     rot = matrix_multiply(rotx, roty);
     rot = matrix_multiply(rot, rotz);
 
+
+
     //create xform from Identity*Translation*Rotation
     curXform = matrix_multiply(xform, trans);
     curXform = matrix_multiply(curXform, rot);
+
+    robot_heading = matrix_multiply(curXform, matrix_transpose([0,0,1,1]));
+    robot_lateral = matrix_multiply(curXform, matrix_transpose([1,0,0,1]));
 
     //set the xform for rendering
     robot.links[link].xform = curXform;
@@ -69,7 +73,7 @@ function traverseFKBase(xform, link){
 
 function traverseFKJoint(xform, joint) {
 
-    var trans, rotx,roty,rotz, rot;
+    var trans, rotx,roty,rotz, rot, quatrot;
 
     //generate translation and individual axis rotation matricies
     trans = generate_translation_matrix(robot.joints[joint].origin.xyz);
@@ -78,6 +82,12 @@ function traverseFKJoint(xform, joint) {
     rotz = generate_rotation_matrix_Z(robot.joints[joint].origin.rpy[2]);
     rot = matrix_multiply(rotx, roty);
     rot = matrix_multiply(rot, rotz);
+
+    quatrot = quaternion_from_axisangle(robot.joints[joint].axis, robot.joints[joint].angle);
+    quatrot = quaternion_normalize(quatrot);
+    quatrot = quaternion_to_rotation_matrix(quatrot);
+    rot = matrix_multiply(rot, quatrot);
+    //multiply by quaternion
 
     //create xform from Identity*Translation*Rotation
     curXform = matrix_multiply(xform, trans);
