@@ -10,11 +10,15 @@ Assignment 2: CHECK
   regrade: working
 Assignment 3: CHECK
   comment: good work
-Assignment 4: PENDING
+Assignment 4: DUE
+  error: branch not found
+  comment: branch name spelled incorrectly
+  comment: good work
+  comment: excellent dance
 Assignment 5: PENDING
 Assignment 6: PENDING
 Assignment 7: PENDING
 Quiz 1: 31/60
-Quiz 2: PENDING
+Quiz 2: 2/15
 Quiz 3: PENDING
 Quiz 4: PENDING
