@@ -52,8 +52,8 @@ function traverseFKBase(xform, link){
     curXform = matrix_multiply(xform, trans);
     curXform = matrix_multiply(curXform, rot);
 
-    robot_heading = matrix_multiply(curXform, matrix_transpose([0,0,1,1]));
-    robot_lateral = matrix_multiply(curXform, matrix_transpose([1,0,0,1]));
+    robot_heading = matrix_multiply(curXform, matrix_from_vector([0,0,1,1]));
+    robot_lateral = matrix_multiply(curXform, matrix_from_vector([1,0,0,1]));
 
     //set the xform for rendering
     robot.links[link].xform = curXform;

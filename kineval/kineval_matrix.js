@@ -18,44 +18,54 @@
     }
 
 
+    function matrix_from_vector(vec){
+        var mat = [];
+        for(var i = 0; i < vec.length; ++i){
+            mat.push([]);
+            mat[i].push(vec[i]);
+        }
+        return mat;
+    }
     // STENCIL: reference matrix code has the following functions:
     //   matrix_multiply
-    function matrix_multiply(A, B){
-
-        var result = [];
-        for(var i = 0; i < 4; ++i){
-            result[i] = [];
-            for(var j = 0; j < 4; ++j){
-                var sum = 0;
-                for(var k = 0; k < 4; ++k){
-                    sum += (A[i][k] * B[k][j]);
+    function matrix_multiply(a, b) {
+        var aNumRows = a.length, aNumCols = a[0].length,
+        bNumRows = b.length, bNumCols = b[0].length,
+        m = new Array(aNumRows);  // initialize array of rows
+        for (var r = 0; r < aNumRows; ++r) {
+            m[r] = new Array(bNumCols); // initialize the current row
+            for (var c = 0; c < bNumCols; ++c) {
+                m[r][c] = 0;             // initialize the current cell
+                for (var i = 0; i < aNumCols; ++i) {
+                    m[r][c] += a[r][i] * b[i][c];
                 }
-                result[i][j] = sum;
             }
         }
-        return result;
+        return m;
     }
+
     //   matrix_transpose
-    function matrix_transpose(A){
-        var m,n;
-        m = 1;
-        n = 4;
+    function matrix_transpose(array, arrayLength){
 
-        var result = new Array(n);
+    var newArray = [];
+    for(var i = 0; i < arrayLength; i++)
+        newArray.push([]);
 
-        for(var i = 0; i < n; ++i)
-            result[i] = new Array(m);
 
-        for(var i = 0; i < n; ++i){
-            for(var j = 0; j < m; ++j){
-                result[i][j] = A[i];
-            }
-        }
-        //console.log(result);
-        return result;
+    for(var i = 0; i < array.length; i++)
+        for(var j = 0; j < arrayLength; j++)
+            newArray[j].push(array[i][j]);
+
+
+    return newArray ;
+}
+
+    function matrix_pseudoinverse(A){
+        //A+=(ATA)^-1AT
+        var transpose = matrix_transpose(A,4);
+        var inverse = numeric.inv(matrix_multiply(transpose, A));
+        return matrix_multiply(inverse, transpose);
     }
-
-    //   matrix_pseudoinverse (IK)
     //   matrix_invert_affine (IK)
 
     //   vector_normalize
