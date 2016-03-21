@@ -43,7 +43,6 @@ kineval.iterateIK = function iterate_inverse_kinematics(endeffector_target_world
 
     //world coordinates of end endeffector
     var worldEndF = matrix_multiply(robot.joints[endeffector_joint].xform, endeffector_position_local);
-
     //create list of joints from end endeffector to base
     var joints = [];
     joints.push(endeffector_joint);
@@ -64,19 +63,45 @@ kineval.iterateIK = function iterate_inverse_kinematics(endeffector_target_world
     for(var i = 0; i < joints.length; ++i)
         Jacobian[i] = new Array();
 
+        /*for (x in joints){
+            console.log("hi");
+            console.log(robot.joints[joints[x]].xform);
+        }*/
     //loop through joints
-    for(x in joints){
+    for(var x = 0; x < joints.length; ++x){
+
+        var xform = matrix_copy(robot.joints[joints[x]].xform);
 
         //compute right side of cross product
         //want: (joint axis) x (end effector position - axis position)
         var crossRight = [];
+
+
+        //transform axis into world frame
+        //axis - origin x end effector
+        //zi = joint axis - joint center in world cooridinates
+
+        var right = matrix_multiply(xform, matrix_from_vector([0,0,0,1]));
+
+        var zi = [];
+        var axis = matrix_from_vector(robot.joints[joints[x]].axis);
+
+        axis.push([1]);
+        var axisPos = matrix_multiply(xform, axis);
+
         for(var i = 0; i < 3; ++i)
-            crossRight[i] = worldEndF[i][0] - robot.joints[joints[x]].axis[i];
+            zi.push(axisPos[i][0] - right[i][0]);
+
+        for(var i = 0; i < 3; ++i)
+            crossRight[i] = worldEndF[i][0] - right[i][0];
+        //console.log(zi);
 
         //cross axis of current joint with the right side and
         //push to the current column, then push three zeros for
         //angular displacement. (This assignment doesn't worry about it).
-        var column = vector_cross(robot.joints[joints[x]].axis, crossRight);
+        var column = vector_cross(zi, crossRight);
+
+
         for(var i = 0; i < 3; ++i)
             column.push(0);
 
@@ -91,18 +116,20 @@ kineval.iterateIK = function iterate_inverse_kinematics(endeffector_target_world
     var dX = [];
     for(var i = 0; i < 6; ++i){
         if(i < 3)
-            dX.push(worldEndF[i][0] - kineval.params.ik_target.position[i][0]);
+            dX.push(kineval.params.ik_target.position[i][0] - worldEndF[i][0]);
         else
             dX.push(0);
     }
 
-
     //turn dX into a matrix for matrix multiply
+    var jacob = kineval.params.ik_pseudoinverse?matrix_pseudoinverse(Jacobian):matrix_transpose(Jacobian,4);
+    //console.log(Jacobian);
     dX = matrix_from_vector(dX);
-    var dTheta = matrix_multiply(matrix_transpose(Jacobian,4), dX);
+    var dTheta = matrix_multiply(jacob, dX);
+
 
     //apply control to each joint.
     for(var i = 0; i < joints.length; ++i)
-        robot.joints[joints[i]].control += (dTheta[i][0]*kineval.params.ik_steplength);
+        robot.joints[joints[i]].control = (dTheta[i][0]*kineval.params.ik_steplength);
 
 }//end iterateIK

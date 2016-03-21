@@ -61,10 +61,10 @@
 }
 
     function matrix_pseudoinverse(A){
-        //A+=(ATA)^-1AT
-        var transpose = matrix_transpose(A,4);
-        var inverse = numeric.inv(matrix_multiply(transpose, A));
-        return matrix_multiply(inverse, transpose);
+        if(A[0].length < 6)
+            return matrix_multiply(numeric.inv(matrix_multiply(matrix_transpose(A),A)), matrix_transpose(A));
+        else
+            return matrix_multiply(matrix_transpose(A), numeric.inv(matrix_multiply(A, matrix_transpose(A))));
     }
     //   matrix_invert_affine (IK)
 
