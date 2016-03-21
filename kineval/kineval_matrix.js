@@ -62,7 +62,8 @@
 
     function matrix_pseudoinverse(A, dof){
 
-        try{
+        return matrix_transpose(A,dof);
+        /*try{
             var transpose = matrix_transpose(A,dof);
             var inv = matrix_multiply(transpose,A);
             inv = numeric.inv(inv);
@@ -70,7 +71,7 @@
         }
         catch(err){
             return matrix_transpose(A,dof);
-        }
+        }*/
     }
     //   matrix_invert_affine (IK)
 
