@@ -63,44 +63,39 @@ kineval.iterateIK = function iterate_inverse_kinematics(endeffector_target_world
     for(var i = 0; i < joints.length; ++i)
         Jacobian[i] = new Array();
 
-        /*for (x in joints){
-            console.log("hi");
-            console.log(robot.joints[joints[x]].xform);
-        }*/
     //loop through joints
     for(var x = 0; x < joints.length; ++x){
 
+        //xform for current joint
         var xform = matrix_copy(robot.joints[joints[x]].xform);
 
         //compute right side of cross product
         //want: (joint axis) x (end effector position - axis position)
         var crossRight = [];
 
+        //joint Origin in world coordinates
+        var jointOrigin = matrix_multiply(xform, matrix_from_vector([0,0,0,1]));
 
-        //transform axis into world frame
-        //axis - origin x end effector
-        //zi = joint axis - joint center in world cooridinates
-
-        var right = matrix_multiply(xform, matrix_from_vector([0,0,0,1]));
-
-        var zi = [];
+        //joint axis
         var axis = matrix_from_vector(robot.joints[joints[x]].axis);
-
         axis.push([1]);
+
+        //axis in world coordinates
         var axisPos = matrix_multiply(xform, axis);
 
+        //left side of cross product
+        var zi = [];
         for(var i = 0; i < 3; ++i)
-            zi.push(axisPos[i][0] - right[i][0]);
+            zi.push(axisPos[i][0] - jointOrigin[i][0]);
 
+        //right side of cross product
         for(var i = 0; i < 3; ++i)
-            crossRight[i] = worldEndF[i][0] - right[i][0];
-        //console.log(zi);
+            crossRight[i] = worldEndF[i][0] - jointOrigin[i][0];
 
         //cross axis of current joint with the right side and
         //push to the current column, then push three zeros for
         //angular displacement. (This assignment doesn't worry about it).
         var column = vector_cross(zi, crossRight);
-
 
         for(var i = 0; i < 3; ++i)
             column.push(0);
@@ -122,8 +117,8 @@ kineval.iterateIK = function iterate_inverse_kinematics(endeffector_target_world
     }
 
     //turn dX into a matrix for matrix multiply
-    var jacob = kineval.params.ik_pseudoinverse?matrix_pseudoinverse(Jacobian):matrix_transpose(Jacobian,4);
-    //console.log(Jacobian);
+    var jacob = kineval.params.ik_pseudoinverse ? matrix_pseudoinverse(Jacobian, joints.length)
+        : matrix_transpose(Jacobian, joints.length);
     dX = matrix_from_vector(dX);
     var dTheta = matrix_multiply(jacob, dX);
 

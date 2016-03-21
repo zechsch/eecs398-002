@@ -60,11 +60,17 @@
     return newArray ;
 }
 
-    function matrix_pseudoinverse(A){
-        if(A[0].length < 6)
-            return matrix_multiply(numeric.inv(matrix_multiply(matrix_transpose(A),A)), matrix_transpose(A));
-        else
-            return matrix_multiply(matrix_transpose(A), numeric.inv(matrix_multiply(A, matrix_transpose(A))));
+    function matrix_pseudoinverse(A, dof){
+
+        try{
+            var transpose = matrix_transpose(A,dof);
+            var inv = matrix_multiply(transpose,A);
+            inv = numeric.inv(inv);
+            return matrix_multiply(inv, transpose);
+        }
+        catch(err){
+            return matrix_transpose(A,dof);
+        }
     }
     //   matrix_invert_affine (IK)
 
