@@ -138,9 +138,11 @@ kineval.iterateIK = function iterate_inverse_kinematics(endeffector_target_world
             dX.push(0);
     }
 
-    //turn dX into a matrix for matrix multiply
+    //calculate jacobian based on whether or not to use pseudoinverse
     var jacob = kineval.params.ik_pseudoinverse ? matrix_pseudoinverse(Jacobian, joints.length)
         : matrix_transpose(Jacobian, joints.length);
+        
+    //turn dX into a matrix for matrix multiply
     dX = matrix_from_vector(dX);
     var dTheta = matrix_multiply(jacob, dX);
 
