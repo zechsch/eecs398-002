@@ -21,7 +21,7 @@
 <body onload="init()">
 
 <canvas id="myCanvas" width=800 height=800 style="z-index: 10 ;border:1px solid #000000;">
-</canvas> 
+</canvas>
 
 <script>
 
@@ -34,10 +34,10 @@ function init() {
     // specify rrt algorithm to use for planning
     rrt_alg = 1;  // 0: basic rrt, 1: rrt_connect
 
-    // set the world for the planner 
+    // set the world for the planner
     //  (stored as "range" global variable with name "planning_scene")
-    //planning_scene = "empty";
-    planning_scene = "misc";
+    planning_scene = "empty";
+    //planning_scene = "misc";
     //planning_scene = "narrow1";
     //planning_scene = "narrow2";
     //planning_scene = "three_sections";
@@ -53,18 +53,18 @@ function init() {
     q_goal = q_goal_config;
 
     // initialize search graphs from start and goal configurations
-    T_a = tree_init(q_init);
-    T_b = tree_init(q_goal);
+    start = tree_init(q_init);
+    end = tree_init(q_goal);
 
     // flag to continue rrt iterations
     rrt_iterate = true;
     rrt_iter_count = 0;
-    rrt_max_iterations = 10000;
+    rrt_max_iterations = 20000;
 
     // make sure the rrt iterations are not running faster than animation update
     cur_time = Date.now();
 
-    // create textbar for text output 
+    // create textbar for text output
     textbar = document.createElement('div');
     textbar.style.position = 'absolute';
     //textbar.style.zIndex = 1;    // if you still don't see the label, try uncommenting this
@@ -77,7 +77,8 @@ function init() {
     textbar.style.left = 30 + 'px';
     document.body.appendChild(textbar);
 
-    // main animation loop maintained by threejs 
+    // main animation loop maintained by threejs
+    A = true;
     animate();
 }
 
@@ -101,8 +102,8 @@ function animate() {
         // update time marker for last iteration update
         cur_time = Date.now();
 
-    // STENCIL: implement single rrt iteration here. an asynch timing mechanism 
-    //   is used instead of a for loop to avoid blocking and non-responsiveness 
+    // STENCIL: implement single rrt iteration here. an asynch timing mechanism
+    //   is used instead of a for loop to avoid blocking and non-responsiveness
     //   in the browser.
     //
     //   provided support functions:
@@ -113,8 +114,37 @@ function animate() {
     //   tree_add_edge - adds and displays new tree edge between configurations
     //   draw_highlighted_path - renders a highlighted path in a tree
 
-    }
+        q_rand = random_config();
+        if(A){
+            if(rrt_extend(start, q_rand) != "trapped"){
+                if(distToGoal < eps){
+                    final = start.newest;
+                    tree_add_vertex(start, q_goal);
+                    tree_add_edge(start, final, start.newest);
+                    console.log("got it.");
+                    console.log(rrt_iter_count);
+                    rrt_iterate = false;
 
+                }
+            }
+        }
+        /*else{
+            if(rrt_extend(end, q_rand) != "trapped"){
+                if(rrt_connect(start, q_new) == "reached"){
+                    final = end.newest;
+                    tree_add_vertex(end, q_goal);
+                    tree_add_edge(end, final, end.newest);
+                    console.log("got it.");
+                    console.log(rrt_iter_count);
+                    rrt_iterate = false;
+
+                }
+            }
+        }
+        A = !A*/
+        rrt_iter_count++;
+    return;
+    }
 }
 
 //////////////////////////////////////////////////
@@ -132,11 +162,11 @@ function draw_robot_world() {
     ctx.fillRect((q_goal[0]*100+200)-5,(q_goal[1]*100+200)-5,10,10);
 
     // draw robot's world
-    for (j=0;j<range.length;j++) { 
+    for (j=0;j<range.length;j++) {
         ctx.fillStyle = "#8888FF";
         ctx.fillRect((range[j][0][0]*100+200),(range[j][1][0]*100+200),(range[j][0][1]-range[j][0][0])*100,(range[j][1][1]-range[j][1][0])*100);
     }
- 
+
 }
 
 function draw_highlighted_path(path) {
@@ -199,17 +229,18 @@ function collision_test(q) {
     var j;
 
     // test for collision with each object
-    for (j=0;j<range.length;j++) { 
+    for (j=0;j<range.length;j++) {
 
         // assume configuration is in collision
-        var in_collision = true; 
+        var in_collision = true;
 
         // no collision detected, if configuration is outside obstacle along any dimension
-        for (i=0;i<q.length;i++) { 
-            if ((q[i]<range[j][i][0])||(q[i]>range[j][i][1]))
+        for (i=0;i<q.length;i++) {
+            if ((q[i]<range[j][i][0])||
+            (q[i]>range[j][i][1]))
                 in_collision = false;
         }
-    
+
         // return collision, if configuration inside obstacle extents along all dimensions
         if (in_collision)
             return true;
@@ -219,8 +250,7 @@ function collision_test(q) {
     return false;
 }
 
-function tree_init(q) {
-
+function tree_init(q){
     // create tree object
     var tree = {};
 
@@ -278,7 +308,7 @@ function tree_add_edge(tree,q1_idx,q2_idx) {
     tree.vertices[q2_idx].edges.push(tree.vertices[q1_idx]);
 
     // draw edge on canvas
-    draw_2D_edge_configurations(tree.vertices[q1_idx].vertex,tree.vertices[q2_idx].vertex); 
+    draw_2D_edge_configurations(tree.vertices[q1_idx].vertex,tree.vertices[q2_idx].vertex);
 }
 
 //////////////////////////////////////////////////
@@ -286,12 +316,98 @@ function tree_add_edge(tree,q1_idx,q2_idx) {
 //////////////////////////////////////////////////
 
     // STENCIL: implement RRT-Connect functions here, such as:
-    //   rrt_extend
+
+    //   rrt_extend - returns status of search, reached, advanced, trapped
+function rrt_extend(T, q){
+    var q_near_idx = nearest_neighbor(T, q);
+    q_new = new_config(T, q, q_near_idx);
+
+    if(!collision_test(q_new)){
+
+        tree_add_vertex(T, q_new);
+        tree_add_edge(T, q_near_idx, T.newest);
+        distToGoal = Math.sqrt(
+        Math.pow(q_goal[0]-q_new[0],2) +
+        Math.pow(q_goal[1]-q_new[1],2));
+
+        return "advanced";
+    }
+    return "trapped";
+}
+
     //   rrt_connect
-    //   random_config
-    //   new_config
-    //   nearest_neighbor
-    //   find_path
+function rrt_connect(T, q){
+   var cont = true;
+   var status = "advanced"
+    while(status == "advanced"){
+        var status;
+        status = rrt_extend(T,q);
+        if(A) q_goal = nearest_neighbor(end, start.newest);
+        else q_goal = nearest_neighbor(start, end.newest);
+
+        distToGoal = Math.sqrt(Math.pow(q_goal[0]-q_new[0],2)+
+        Math.pow(q_goal[1]-q_new[1],2));
+
+        if(distToGoal < eps) return "reached"
+    }
+    return status;
+}
+
+    //   random_config - return random position in [0,10]
+function random_config(){
+
+    var x = (Math.random() * 11) - 5;
+    var y = (Math.random() * 11) - 5;
+    var q = [x,y];
+    while(collision_test(q)){
+        q[0] = (Math.random() * 11) - 5;
+        q[1] = (Math.random() * 11) - 5;
+    }
+
+    return q;
+
+}
+
+    //   new_config - returns vertex q_near--->q = q_new
+function new_config(T, q, q_near){
+    var q_n = [];
+    var x = (q[0] - T.vertices[q_near].vertex[0]);
+    var y = (q[1] - T.vertices[q_near].vertex[1]);
+    var s = Math.sqrt(Math.pow(x,2) + Math.pow(y,2));
+    x /= s;
+    y /= s;
+    x *= eps;
+    y *= eps;
+    x += T.vertices[q_near].vertex[0];
+    y += T.vertices[q_near].vertex[1];
+    q_n = [x, y];
+
+
+    return q_n;
+}
+
+    //   nearest_neighbor - return idx of nearest_neighbor to q in T
+function nearest_neighbor(T, q){
+    var closestDist = Number.MAX_SAFE_INTEGER;
+    var closest = 0;
+    for (var x = 0; x < T.vertices.length; ++x){
+        var xdist = q[0] - T.vertices[x].vertex[0];
+        var ydist = q[1] - T.vertices[x].vertex[1];
+        var dist = Math.sqrt(Math.pow(xdist, 2) + Math.pow(ydist, 2));
+
+        if(dist < closestDist){
+            closest = x;
+            closestDist = dist;
+        }
+
+    }
+    return closest;
+}
+
+    //   find_path - find a path once both trees are connected
+function find_path(a, b){
+
+}
     //   path_dfs
 
 </script>
@@ -299,5 +415,3 @@ function tree_add_edge(tree,q1_idx,q2_idx) {
 
 </body>
 </html>
-
-

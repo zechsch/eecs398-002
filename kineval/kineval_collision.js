@@ -3,9 +3,9 @@
 
     KinEval | Kinematic Evaluator | collision detection
 
-    Implementation of robot kinematics, control, decision making, and dynamics 
+    Implementation of robot kinematics, control, decision making, and dynamics
         in HTML5/JavaScript and threejs
-     
+
     @author ohseejay / https://github.com/ohseejay / https://bitbucket.org/ohseejay
 
     Chad Jenkins
@@ -17,7 +17,7 @@
 |\/| |\/| |\/| |\/| |\/| |\/| |\/| |\/| |\/| |\/| |\/| |\/| |\/| |\/| |\/| --*/
 
 kineval.robotIsCollision = function robot_iscollision() {
-    // test whether geometry of current configuration of robot is in collision with planning world 
+    // test whether geometry of current configuration of robot is in collision with planning world
 
     // form configuration from base location and joint angles
     var q_robot_config = [
@@ -44,7 +44,7 @@ kineval.robotIsCollision = function robot_iscollision() {
 
 
 kineval.poseIsCollision = function robot_collision_test(q) {
-    // perform collision test of robot geometry against planning world 
+    // perform collision test of robot geometry against planning world
 
     // test base origin (not extents) against world boundary extents
     if ((q[0]<robot_boundary[0][0])||(q[0]>robot_boundary[1][0])||(q[2]<robot_boundary[0][2])||(q[2]>robot_boundary[1][2]))
@@ -55,6 +55,3 @@ kineval.poseIsCollision = function robot_collision_test(q) {
     //return robot_collision_forward_kinematics(q);
 
 }
-
-
-

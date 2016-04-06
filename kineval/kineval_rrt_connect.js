@@ -3,9 +3,9 @@
 
     KinEval | Kinematic Evaluator | RRT motion planning
 
-    Implementation of robot kinematics, control, decision making, and dynamics 
+    Implementation of robot kinematics, control, decision making, and dynamics
         in HTML5/JavaScript and threejs
-     
+
     @author ohseejay / https://github.com/ohseejay / https://bitbucket.org/ohseejay
 
     Chad Jenkins
@@ -20,9 +20,9 @@
 /////     RRT MOTION PLANNER
 //////////////////////////////////////////////////
 
-// STUDENT: 
-// compute motion plan and output into robot_path array 
-// elements of robot_path are vertices based on tree structure in tree_init() 
+// STUDENT:
+// compute motion plan and output into robot_path array
+// elements of robot_path are vertices based on tree structure in tree_init()
 // motion planner assumes collision checking by kineval.poseIsCollision()
 
 /* KE 2 : Notes:
@@ -39,7 +39,7 @@ STUDENT: reference code has functions for:
 kineval.planMotionRRTConnect = function motionPlanningRRTConnect() {
 
     // exit function if RRT is not implemented
-    //   start by uncommenting kineval.robotRRTPlannerInit 
+    //   start by uncommenting kineval.robotRRTPlannerInit
     if (typeof kineval.robotRRTPlannerInit === 'undefined') return;
 
     if ((kineval.params.update_motion_plan) && (!kineval.params.generating_motion_plan)) {
@@ -111,7 +111,7 @@ kineval.robotRRTPlannerInit = function robot_rrt_planner_init() {
     }
 
     // set goal configuration as the zero configuration
-    var i; 
+    var i;
     q_goal_config = new Array(q_start_config.length);
     for (i=0;i<q_goal_config.length;i++) q_goal_config[i] = 0;
 
@@ -133,8 +133,8 @@ function robot_rrt_planner_iterate() {
     if (rrt_iterate && (Date.now()-cur_time > 10)) {
         cur_time = Date.now();
 
-    // STENCIL: implement single rrt iteration here. an asynch timing mechanism 
-    //   is used instead of a for loop to avoid blocking and non-responsiveness 
+    // STENCIL: implement single rrt iteration here. an asynch timing mechanism
+    //   is used instead of a for loop to avoid blocking and non-responsiveness
     //   in the browser.
     //
     //   once plan is found, highlight vertices of found path by:
@@ -193,7 +193,7 @@ function tree_add_vertex(tree,q) {
 function add_config_origin_indicator_geom(vertex) {
 
     // create a threejs rendering geometry for the base location of a configuration
-    // assumes base origin location for configuration is first 3 elements 
+    // assumes base origin location for configuration is first 3 elements
     // assumes vertex is from tree and includes vertex field with configuration
 
     temp_geom = new THREE.CubeGeometry(0.1,0.1,0.1);
@@ -218,6 +218,93 @@ function tree_add_edge(tree,q1_idx,q2_idx) {
     // can draw edge here, but not doing so to save rendering computation
 }
 
+function collision_FK_link(link,mstack,q) {
+
+  // this function is part of an FK recursion to test each link
+  //   for collisions, along with a joint traversal function for
+  //   the input robot configuration q
+  //
+  // this function returns the name of a robot link in collision
+  //   or false if all its kinematic descendants are not in collision
+
+  // test collision by transforming obstacles in world to link space
+  mstack_inv = numeric.inv(mstack);
+  // (alternatively) mstack_inv = matrix_invert_affine(mstack);
+
+  var i; var j;
+
+  // test each obstacle against link bbox geometry
+  //   by transforming obstacle into link frame and
+  //   testing against axis aligned bounding box
+  for (j in robot_obstacles) {
+
+    var obstacle_local =
+      matrix_multiply(mstack_inv,robot_obstacles[j].location);
+
+    // assume link is in collision as default
+    var in_collision = true;
+
+    // return false if no collision is detected such that
+    //   obstacle lies outside the link extents
+    //   along any dimension of its bounding box
+    if (
+      (obstacle_local[0][0]<
+       (link.bbox.min.x-robot_obstacles[j].radius)
+      )
+      ||
+      (obstacle_local[0][0]>
+       (link.bbox.max.x+robot_obstacles[j].radius)
+      )
+    )
+      in_collision = false;
+
+    if (
+      (obstacle_local[1][0]<
+       (link.bbox.min.y-robot_obstacles[j].radius)
+      )
+      ||
+      (obstacle_local[1][0]>
+       (link.bbox.max.y+robot_obstacles[j].radius)
+      )
+    )
+      in_collision = false;
+
+    if (
+      (obstacle_local[2][0]<
+       (link.bbox.min.z-robot_obstacles[j].radius)
+      )
+      ||
+      (obstacle_local[2][0]>
+       (link.bbox.max.z+robot_obstacles[j].radius)
+      )
+    )
+      in_collision = false;
+
+    // return name of link for detected collision if
+    //   obstacle lies within the link extents
+    //   along all dimensions of its bounding box
+    if (in_collision)
+      return link.name;
+  }
+
+  // recurse child joints for collisions,
+  //   returning name of descendant link in collision
+  //   or false if all descendants are not in collision
+  if (typeof link.children !== 'undefined') {
+    var local_collision;
+    for (i in link.children) {
+       // STUDENT: create this joint FK traversal function
+       local_collision =
+         collision_FK_joint(robot.joints[link.children[i]],mstack,q)
+       if (local_collision)
+         return local_collision;
+     }
+  }
+
+  // return false, when no collision detected for this link and children
+  return false;
+}
+
 //////////////////////////////////////////////////
 /////     RRT IMPLEMENTATION FUNCTIONS
 //////////////////////////////////////////////////
@@ -232,13 +319,3 @@ function tree_add_edge(tree,q1_idx,q2_idx) {
     //   normalize_joint_state
     //   find_path
     //   path_dfs
-
-
-
-
-
-
-
-
-
-
