@@ -36,11 +36,11 @@ function init() {
 
     // set the world for the planner
     //  (stored as "range" global variable with name "planning_scene")
-    planning_scene = "empty";
+    //planning_scene = "empty";
     //planning_scene = "misc";
     //planning_scene = "narrow1";
     //planning_scene = "narrow2";
-    //planning_scene = "three_sections";
+    planning_scene = "three_sections";
     set_planning_scene();
 
     // specify threshold radius for step size and when goal is reached
@@ -51,6 +51,7 @@ function init() {
     q_goal_config = [4,4];
     q_init = q_start_config;
     q_goal = q_goal_config;
+    g = q_goal;
 
     // initialize search graphs from start and goal configurations
     start = tree_init(q_init);
@@ -115,34 +116,30 @@ function animate() {
     //   draw_highlighted_path - renders a highlighted path in a tree
 
         q_rand = random_config();
-        if(A){
-            if(rrt_extend(start, q_rand) != "trapped"){
-                if(distToGoal < eps){
-                    final = start.newest;
-                    tree_add_vertex(start, q_goal);
-                    tree_add_edge(start, final, start.newest);
-                    console.log("got it.");
-                    console.log(rrt_iter_count);
-                    rrt_iterate = false;
-
-                }
+        if(rrt_extend(start, q_rand) != "trapped"){
+            distToGoal = calcDist(start,end, q_goal);
+            if(distToGoal < eps){
+                final = start.newest;
+                tree_add_vertex(start, g);
+                tree_add_edge(start, final, start.newest);
+                console.log("got it.");
+                console.log(rrt_iter_count);
+                rrt_iterate = false;
             }
         }
-        /*else{
-            if(rrt_extend(end, q_rand) != "trapped"){
-                if(rrt_connect(start, q_new) == "reached"){
-                    final = end.newest;
-                    tree_add_vertex(end, q_goal);
-                    tree_add_edge(end, final, end.newest);
-                    console.log("got it.");
-                    console.log(rrt_iter_count);
-                    rrt_iterate = false;
-
-                }
+        q_rand = random_config();
+        if(rrt_extend(end, q_rand) != "trapped"){
+            distToGoal = calcDist(end,start);
+            if(distToGoal < eps){
+                final = end.newest;
+                tree_add_vertex(end, g);
+                tree_add_edge(end, final, end.newest);
+                console.log("got it.");
+                console.log(rrt_iter_count);
+                rrt_iterate = false;
             }
         }
-        A = !A*/
-        rrt_iter_count++;
+
     return;
     }
 }
@@ -323,12 +320,9 @@ function rrt_extend(T, q){
     q_new = new_config(T, q, q_near_idx);
 
     if(!collision_test(q_new)){
-
+        rrt_iter_count++;
         tree_add_vertex(T, q_new);
         tree_add_edge(T, q_near_idx, T.newest);
-        distToGoal = Math.sqrt(
-        Math.pow(q_goal[0]-q_new[0],2) +
-        Math.pow(q_goal[1]-q_new[1],2));
 
         return "advanced";
     }
@@ -404,6 +398,20 @@ function nearest_neighbor(T, q){
     return closest;
 }
 
+function calcDist(A,B){
+    var a = A.vertices[A.newest].vertex;
+    var closest = nearest_neighbor(B, A.vertices[A.newest].vertex);
+    var b = B.vertices[closest].vertex;
+
+    var dist = Math.sqrt(
+        Math.pow(b[0]-a[0],2) +
+        Math.pow(b[1]-a[1],2));
+    g = b;
+
+    return dist;
+
+
+}
     //   find_path - find a path once both trees are connected
 function find_path(a, b){
 
