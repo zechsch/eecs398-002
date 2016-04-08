@@ -51,7 +51,6 @@ function init() {
     q_goal_config = [4,4];
     q_init = q_start_config;
     q_goal = q_goal_config;
-    g = q_goal;
 
     // initialize search graphs from start and goal configurations
     start = tree_init(q_init);
@@ -79,7 +78,8 @@ function init() {
     document.body.appendChild(textbar);
 
     // main animation loop maintained by threejs
-    A = true;
+    path = [];
+    finished = false;
     animate();
 }
 
@@ -117,30 +117,47 @@ function animate() {
 
         q_rand = random_config();
         if(rrt_extend(start, q_rand) != "trapped"){
-            distToGoal = calcDist(start,end, q_goal);
+            distToGoal = calcDist(start,end);
             if(distToGoal < eps){
                 final = start.newest;
                 tree_add_vertex(start, g);
                 tree_add_edge(start, final, start.newest);
-                console.log("got it.");
-                console.log(rrt_iter_count);
                 rrt_iterate = false;
+                find_path(start.vertices[0], midpoint);
+                finished = false;
+                midpoint.vertex[2] = 0;
+                find_path(midpoint, end.vertices[0]);
+                draw_highlighted_path(path);
             }
         }
+
+
         q_rand = random_config();
-        if(rrt_extend(end, q_rand) != "trapped"){
+        if(rrt_extend(end, q_rand) != "trapped" && rrt_iterate){
             distToGoal = calcDist(end,start);
             if(distToGoal < eps){
                 final = end.newest;
                 tree_add_vertex(end, g);
                 tree_add_edge(end, final, end.newest);
-                console.log("got it.");
-                console.log(rrt_iter_count);
                 rrt_iterate = false;
+                find_path(end.vertices[0], midpoint);
+                finished = false;
+                midpoint.vertex[2] = 0;
+                find_path(midpoint, start.vertices[0]);
+                draw_highlighted_path(path);
             }
         }
 
     return;
+    }
+}
+
+function findMid(point, T){
+
+    for(x in T.vertices){
+        if((T.vertices[x].vertex[0] == point[0]) &&
+            (T.vertices[x].vertex[1] == point[1]))
+                return x;
     }
 }
 
@@ -255,6 +272,7 @@ function tree_init(q){
     tree.vertices = [];
     tree.vertices[0] = {};
     tree.vertices[0].vertex = q;
+    tree.vertices[0].vertex.push(0);
     tree.vertices[0].edges = [];
 
     // maintain index of newest vertex added to tree
@@ -269,6 +287,7 @@ function tree_add_vertex(tree,q) {
     new_vertex = {};
     new_vertex.edges = [];
     new_vertex.vertex = q;
+    new_vertex.vertex.push(0);
     tree.vertices.push(new_vertex);
 
     // maintain index of newest vertex added to tree
@@ -407,13 +426,35 @@ function calcDist(A,B){
         Math.pow(b[0]-a[0],2) +
         Math.pow(b[1]-a[1],2));
     g = b;
+    midpoint = B.vertices[closest];
 
     return dist;
 
 
 }
+
     //   find_path - find a path once both trees are connected
+    //  a is the start node, b is the goal node
 function find_path(a, b){
+
+    if(a.vertex[2] == 1) return;
+    a.vertex[2] = 1;
+    path.push(a);
+    if((a.vertex[0] == b.vertex[0]) &&
+        (a.vertex[1] == b.vertex[1]) || finished){
+            finished = true;
+            return path;
+        }
+    for (neighbor in a.edges){
+        if(a.edges[neighbor].vertex[2] != 1){
+
+            path.push(a.edges[neighbor]);
+            find_path(a.edges[neighbor], b);
+            if(finished) return;
+            path.pop();
+        }
+    }
+    if(!finished) path.pop();
 
 }
     //   path_dfs
