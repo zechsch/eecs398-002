@@ -230,13 +230,14 @@ function collision_FK_link(link,mstack,q) {
   // test collision by transforming obstacles in world to link space
   mstack_inv = numeric.inv(mstack);
   // (alternatively) mstack_inv = matrix_invert_affine(mstack);
-
+  link = robot.links[link];
   var i; var j;
-
   // test each obstacle against link bbox geometry
   //   by transforming obstacle into link frame and
   //   testing against axis aligned bounding box
+
   for (j in robot_obstacles) {
+
 
     var obstacle_local =
       matrix_multiply(mstack_inv,robot_obstacles[j].location);
@@ -247,44 +248,32 @@ function collision_FK_link(link,mstack,q) {
     // return false if no collision is detected such that
     //   obstacle lies outside the link extents
     //   along any dimension of its bounding box
-    if (
-      (obstacle_local[0][0]<
-       (link.bbox.min.x-robot_obstacles[j].radius)
-      )
-      ||
-      (obstacle_local[0][0]>
-       (link.bbox.max.x+robot_obstacles[j].radius)
-      )
-    )
+    //console.log(link.bbox);
+    //console.log(j, 0);
+    if ((obstacle_local[0][0]<(link.bbox.min.x-robot_obstacles[j].radius)) ||
+      (obstacle_local[0][0]>(link.bbox.max.x+robot_obstacles[j].radius))){
       in_collision = false;
+      //console.log(1);
+  }
 
-    if (
-      (obstacle_local[1][0]<
-       (link.bbox.min.y-robot_obstacles[j].radius)
-      )
-      ||
-      (obstacle_local[1][0]>
-       (link.bbox.max.y+robot_obstacles[j].radius)
-      )
-    )
+    if ((obstacle_local[1][0]<(link.bbox.min.y-robot_obstacles[j].radius)) ||
+      (obstacle_local[1][0]>(link.bbox.max.y+robot_obstacles[j].radius))){
       in_collision = false;
+      //console.log(2);
+  }
 
-    if (
-      (obstacle_local[2][0]<
-       (link.bbox.min.z-robot_obstacles[j].radius)
-      )
-      ||
-      (obstacle_local[2][0]>
-       (link.bbox.max.z+robot_obstacles[j].radius)
-      )
-    )
+    if ((obstacle_local[2][0]<(link.bbox.min.z-robot_obstacles[j].radius))||
+      (obstacle_local[2][0]>(link.bbox.max.z+robot_obstacles[j].radius))){
       in_collision = false;
+     // console.log(3);
+  }
 
     // return name of link for detected collision if
     //   obstacle lies within the link extents
     //   along all dimensions of its bounding box
     if (in_collision)
       return link.name;
+
   }
 
   // recurse child joints for collisions,
@@ -295,7 +284,8 @@ function collision_FK_link(link,mstack,q) {
     for (i in link.children) {
        // STUDENT: create this joint FK traversal function
        local_collision =
-         collision_FK_joint(robot.joints[link.children[i]],mstack,q)
+         collision_FK_joint(robot.joints[link.children[i]].name,
+             robot.joints[link.children[i]].xform,q)
        if (local_collision)
          return local_collision;
      }
@@ -303,6 +293,16 @@ function collision_FK_link(link,mstack,q) {
 
   // return false, when no collision detected for this link and children
   return false;
+}
+
+function collision_FK_joint(joint, mstack, q){
+
+    if(typeof robot.joints[joint].child != "undefined"){
+
+        return collision_FK_link(robot.joints[joint].child,
+            robot.links[robot.joints[joint].child].xform, q);
+    }
+    else return false;
 }
 
 //////////////////////////////////////////////////

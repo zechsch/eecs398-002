@@ -64,7 +64,6 @@ function traverseFKBase(xform, link){
     //loop through joints and if they are a child of base, iterate on them
     for(x in robot.joints){
         if(robot.joints[x].parent == robot.base){
-            //console.log("hi");
             traverseFKJoint(baseXform, x);
         }
     }
