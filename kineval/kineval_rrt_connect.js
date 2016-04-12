@@ -102,8 +102,15 @@ kineval.robotRRTPlannerInit = function robot_rrt_planner_init() {
         robot.origin.rpy[2]
     ];
 
+
+    epsLin = .2;
+    epsAng = .1;
+
     q_names = {};  // store mapping between joint names and q DOFs
     q_index = [];  // store mapping between joint names and q DOFs
+
+    for (x in robot.joints)
+        q_start_config.push(robot.joints[x].angle);
 
     for (x in robot.joints) {
         q_names[x] = q_start_config.length;
@@ -115,9 +122,14 @@ kineval.robotRRTPlannerInit = function robot_rrt_planner_init() {
     q_goal_config = new Array(q_start_config.length);
     for (i=0;i<q_goal_config.length;i++) q_goal_config[i] = 0;
 
+    start = tree_init(q_start_config);
+    end = tree_init(q_goal_config);
     // flag to continue rrt iterations
     rrt_iterate = true;
     rrt_iter_count = 0;
+
+    path = [];
+    finished = false;
 
     // make sure the rrt iterations are not running faster than animation update
     cur_time = Date.now();
@@ -146,8 +158,39 @@ function robot_rrt_planner_iterate() {
     //   tree_init - creates a tree of configurations
     //   tree_add_vertex - adds and displays new configuration vertex for a tree
     //   tree_add_edge - adds and displays new tree edge between configurations
-    }
 
+        q_rand = random_config();
+        if(rrt_extend(start, q_rand) != "trapped"){
+            if(calcDist(start, end)){
+                finalVert = start.newest;
+                tree_add_vertex(start, b);
+                tree_add_edge(start, finalVert, start.newest);
+                rrt_iterate = false;
+                find_path(start.vertices[0], start.vertices[start.newest]);
+                finished = false;
+                find_path(midpoint, end.vertices[0]);
+                console.log("done1");
+                console.log(kineval.motion_plan);
+                return "reached";
+            }
+        }
+
+        q_rand = random_config();
+        if(rrt_extend(end, q_rand) != "trapped" && rrt_iterate){
+            if(calcDist(end,start)){
+                finalVert = end.newest;
+                tree_add_vertex(end, b);
+                tree_add_edge(end, finalVert, end.newest);
+                rrt_iterate = false;
+                find_path(end.vertices[0], end.vertices[end.newest]);
+                finished = false;
+                find_path(midpoint, start.vertices[0]);
+                console.log("done2");
+                console.log(kineval.motion_plan);
+                return "reached";
+            }
+        }
+    }
 }
 
 //////////////////////////////////////////////////
@@ -181,6 +224,7 @@ function tree_add_vertex(tree,q) {
     var new_vertex = {};
     new_vertex.edges = [];
     new_vertex.vertex = q;
+    new_vertex.vertex.push(0);
 
     // create rendering geometry for base location of vertex configuration
     add_config_origin_indicator_geom(new_vertex);
@@ -218,104 +262,127 @@ function tree_add_edge(tree,q1_idx,q2_idx) {
     // can draw edge here, but not doing so to save rendering computation
 }
 
-function collision_FK_link(link,mstack,q) {
-
-  // this function is part of an FK recursion to test each link
-  //   for collisions, along with a joint traversal function for
-  //   the input robot configuration q
-  //
-  // this function returns the name of a robot link in collision
-  //   or false if all its kinematic descendants are not in collision
-
-  // test collision by transforming obstacles in world to link space
-  mstack_inv = numeric.inv(mstack);
-  // (alternatively) mstack_inv = matrix_invert_affine(mstack);
-  link = robot.links[link];
-  var i; var j;
-  // test each obstacle against link bbox geometry
-  //   by transforming obstacle into link frame and
-  //   testing against axis aligned bounding box
-
-  for (j in robot_obstacles) {
-
-
-    var obstacle_local =
-      matrix_multiply(mstack_inv,robot_obstacles[j].location);
-
-    // assume link is in collision as default
-    var in_collision = true;
-
-    // return false if no collision is detected such that
-    //   obstacle lies outside the link extents
-    //   along any dimension of its bounding box
-    //console.log(link.bbox);
-    //console.log(j, 0);
-    if ((obstacle_local[0][0]<(link.bbox.min.x-robot_obstacles[j].radius)) ||
-      (obstacle_local[0][0]>(link.bbox.max.x+robot_obstacles[j].radius))){
-      in_collision = false;
-      //console.log(1);
-  }
-
-    if ((obstacle_local[1][0]<(link.bbox.min.y-robot_obstacles[j].radius)) ||
-      (obstacle_local[1][0]>(link.bbox.max.y+robot_obstacles[j].radius))){
-      in_collision = false;
-      //console.log(2);
-  }
-
-    if ((obstacle_local[2][0]<(link.bbox.min.z-robot_obstacles[j].radius))||
-      (obstacle_local[2][0]>(link.bbox.max.z+robot_obstacles[j].radius))){
-      in_collision = false;
-     // console.log(3);
-  }
-
-    // return name of link for detected collision if
-    //   obstacle lies within the link extents
-    //   along all dimensions of its bounding box
-    if (in_collision)
-      return link.name;
-
-  }
-
-  // recurse child joints for collisions,
-  //   returning name of descendant link in collision
-  //   or false if all descendants are not in collision
-  if (typeof link.children !== 'undefined') {
-    var local_collision;
-    for (i in link.children) {
-       // STUDENT: create this joint FK traversal function
-       local_collision =
-         collision_FK_joint(robot.joints[link.children[i]].name,
-             robot.joints[link.children[i]].xform,q)
-       if (local_collision)
-         return local_collision;
-     }
-  }
-
-  // return false, when no collision detected for this link and children
-  return false;
-}
-
-function collision_FK_joint(joint, mstack, q){
-
-    if(typeof robot.joints[joint].child != "undefined"){
-
-        return collision_FK_link(robot.joints[joint].child,
-            robot.links[robot.joints[joint].child].xform, q);
-    }
-    else return false;
-}
 
 //////////////////////////////////////////////////
 /////     RRT IMPLEMENTATION FUNCTIONS
 //////////////////////////////////////////////////
 
+function random_config(){
+    var q = [];
+    q[0] = Math.random() * 5;
+    q[1] = 0;
+    q[2] = Math.random() * 5;
+    q[3] = 0;
+    q[4] = Math.random() * 2 * Math.PI;
+    q[5] = 0;
+    q[6] = Math.random() * 2 * Math.PI;
+    q[7] = Math.random() * 2 * Math.PI;
+    q[8] = Math.random() * 2 * Math.PI;
+    q[9] = Math.random() * 2 * Math.PI;
+    q[10] = Math.random() * 2 * Math.PI;
 
-    // STENCIL: implement RRT-Connect functions here, such as:
-    //   rrt_extend
-    //   rrt_connect
-    //   random_config
-    //   new_config
-    //   nearest_neighbor
-    //   normalize_joint_state
-    //   find_path
-    //   path_dfs
+    return q;
+}
+
+function rrt_extend(T, q){
+    var q_near_idx = nearest_neighbor(T,q);
+    q_new = new_config(T,q,q_near_idx);
+
+    if(!kineval.poseIsCollision(q_new)){
+        rrt_iter_count++;
+        tree_add_vertex(T,q_new);
+        tree_add_edge(T,q_near_idx, T.newest);
+
+        return "advanced";
+    }
+    return "trapped";
+}
+
+function nearest_neighbor(T,q){
+    var closestDist = Number.MAX_SAFE_INTEGER;
+    var closest = 0;
+    //loop through vertices
+    for(var i = 0; i < T.vertices.length; ++i){
+        var xDist = q[0] - T.vertices[i].vertex[0];
+        var zDist = q[2] - T.vertices[i].vertex[2];
+        var linDist = Math.sqrt(Math.pow(xDist, 2) + Math.pow(zDist,2));
+        var ang = 0;
+        for(var j = 4; j < T.vertices[i].length; ++j)
+            ang += (q[j] - T.vertices[i].vertex[j])
+
+        if((linDist + ang) < closestDist){
+            closest = i;
+            closestDist = linDist + ang;
+        }
+    }
+    return closest;
+}
+
+function new_config(T, q, q_near){
+    var q_n = [];
+    var x = q[0] - T.vertices[q_near].vertex[0];
+    var z = q[2] - T.vertices[q_near].vertex[2];
+    var linMagnitude = Math.sqrt(Math.pow(x,2) + Math.pow(z,2));
+    x *= epsLin/linMagnitude;
+    z *= epsLin/linMagnitude;
+    x += T.vertices[q_near].vertex[0];
+    z += T.vertices[q_near].vertex[2];
+    for(var i = 0; i < 11; ++i){
+        if(i == 0) q_n[i] = x;
+        else if (i == 2) q_n[i] = z;
+        else if (i == 1 || i == 3 || i == 5) q_n[i] = 0;
+        else{
+            var diff = q[i] - T.vertices[q_near].vertex[i];
+            if(diff >= epsAng) q_n[i] = T.vertices[q_near].vertex[i] + epsAng;
+            else q_n[i] = T.vertices[q_near].vertex[i] + diff;
+        }
+    }
+
+    return q_n;
+}
+
+function calcDist(A,B){
+    var a = A.vertices[A.newest].vertex;
+    var closest = nearest_neighbor(B, A.vertices[A.newest].vertex);
+    b = B.vertices[closest].vertex;
+
+    if(Math.sqrt(
+        Math.pow(b[0] - a[0], 2) +
+        Math.pow(b[2] - a[2], 2)) > epsLin) return false;
+    for(var i = 4; i < 11; ++i){
+        if(i == 5) continue;
+        if(b[i] - a[i] > epsAng) return false;
+    }
+    midpoint = B.vertices[closest];
+    return true;
+
+}
+
+function find_path(a,b){
+    console.log(kineval.motion_plan.length);
+    if(a.vertex[11] == 1) return;
+    a.vertex[11] = 1;
+    kineval.motion_plan.push(a);
+    var isEnd = true;
+
+    for(var i = 0; i < 11; ++i)
+        if(a[i] != b[i]){
+            isEnd = false;
+        }
+
+    if(isEnd || finished){
+        finished = true;
+        return kineval.motion_plan;
+    }
+
+    for(neighbor in a.edges){
+        if(a.edges[neighbor].vertex[11] != 1){
+            kineval.motion_plan.push(a.edges[neighbor]);
+            find_path(a.edges[neighbor], b);
+            if(finished) return;
+            kineval.motion_plan.pop();
+        }
+    }
+    if(!finished) kineval.motion_plan.pop();
+
+}
