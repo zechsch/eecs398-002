@@ -10,15 +10,19 @@ Assignment 2: CHECK
   regrade: working
 Assignment 3: CHECK
   comment: good work
-Assignment 4: DUE
+Assignment 4: CHECK
   error: branch not found
   comment: branch name spelled incorrectly
   comment: good work
   comment: excellent dance
-Assignment 5: PENDING
+  regrade: working
+Assignment 5: CHECK
+  comment: good work
+  comment: MR2 IK Random Trial Score: 54
 Assignment 6: PENDING
-Assignment 7: PENDING
+Assignment 7: CHECK
+  comment: presented during office hours on April 11
 Quiz 1: 31/60
 Quiz 2: 2/15
-Quiz 3: PENDING
-Quiz 4: PENDING
+Quiz 3: 5/10
+Quiz 4: 9/30
