@@ -171,8 +171,9 @@ function robot_rrt_planner_iterate() {
                 finished = false;
                 midpoint.vertex[midpoint.vertex.length-2] = 0;
                 find_path(midpoint, end.vertices[0]);
+                console.log(1);
                 for(x in kineval.motion_plan)
-                    kineval.motion_plan[x].geom.material.color = {r:1,g:0,b:0};
+                    kineval.motion_plan[x].geom.material.color = {r:0,g:0,b:255};
                 return "reached";
             }
         }
@@ -188,8 +189,9 @@ function robot_rrt_planner_iterate() {
                 finished = false;
                 midpoint.vertex[midpoint.vertex.length-2] = 0;
                 find_path(end.vertices[end.newest], end.vertices[0]);
+                console.log(2);
                 for(x in kineval.motion_plan)
-                    kineval.motion_plan[x].geom.material.color = {r:1,g:0,b:0};
+                    kineval.motion_plan[x].geom.material.color = {r:255,g:0,b:0};
                 return "reached";
             }
         }
