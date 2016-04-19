@@ -103,14 +103,15 @@ kineval.robotRRTPlannerInit = function robot_rrt_planner_init() {
     ];
 
 
-    epsLin = .2;
-    epsAng = .1;
+    epsLin = .5;
+    epsAng = .5;
 
     q_names = {};  // store mapping between joint names and q DOFs
     q_index = [];  // store mapping between joint names and q DOFs
 
     for (x in robot.joints)
         q_start_config.push(robot.joints[x].angle);
+
 
     for (x in robot.joints) {
         q_names[x] = q_start_config.length;
@@ -168,9 +169,10 @@ function robot_rrt_planner_iterate() {
                 rrt_iterate = false;
                 find_path(start.vertices[0], start.vertices[start.newest]);
                 finished = false;
+                midpoint.vertex[midpoint.vertex.length-2] = 0;
                 find_path(midpoint, end.vertices[0]);
-                console.log("done1");
-                console.log(kineval.motion_plan);
+                for(x in kineval.motion_plan)
+                    kineval.motion_plan[x].geom.material.color = {r:1,g:0,b:0};
                 return "reached";
             }
         }
@@ -182,11 +184,12 @@ function robot_rrt_planner_iterate() {
                 tree_add_vertex(end, b);
                 tree_add_edge(end, finalVert, end.newest);
                 rrt_iterate = false;
-                find_path(end.vertices[0], end.vertices[end.newest]);
+                find_path(start.vertices[0], midpoint);
                 finished = false;
-                find_path(midpoint, start.vertices[0]);
-                console.log("done2");
-                console.log(kineval.motion_plan);
+                midpoint.vertex[midpoint.vertex.length-2] = 0;
+                find_path(end.vertices[end.newest], end.vertices[0]);
+                for(x in kineval.motion_plan)
+                    kineval.motion_plan[x].geom.material.color = {r:1,g:0,b:0};
                 return "reached";
             }
         }
@@ -268,10 +271,12 @@ function tree_add_edge(tree,q1_idx,q2_idx) {
 //////////////////////////////////////////////////
 
 function random_config(){
+    var xval = Math.abs(robot_boundary[0][0] - robot_boundary[1][0]);
+    var zval = Math.abs(robot_boundary[0][2] - robot_boundary[1][2]);
     var q = [];
-    q[0] = Math.random() * 5;
+    q[0] = Math.random() * (xval + 1) + robot_boundary[0][0];
     q[1] = 0;
-    q[2] = Math.random() * 5;
+    q[2] = Math.random() * (zval + 1) + robot_boundary[0][2];
     q[3] = 0;
     q[4] = Math.random() * 2 * Math.PI;
     q[5] = 0;
@@ -287,6 +292,7 @@ function random_config(){
 function rrt_extend(T, q){
     var q_near_idx = nearest_neighbor(T,q);
     q_new = new_config(T,q,q_near_idx);
+
 
     if(!kineval.poseIsCollision(q_new)){
         rrt_iter_count++;
@@ -323,8 +329,10 @@ function new_config(T, q, q_near){
     var x = q[0] - T.vertices[q_near].vertex[0];
     var z = q[2] - T.vertices[q_near].vertex[2];
     var linMagnitude = Math.sqrt(Math.pow(x,2) + Math.pow(z,2));
-    x *= epsLin/linMagnitude;
-    z *= epsLin/linMagnitude;
+    x /= linMagnitude;
+    x *= epsLin;
+    z /= linMagnitude;
+    z *= epsLin;
     x += T.vertices[q_near].vertex[0];
     z += T.vertices[q_near].vertex[2];
     for(var i = 0; i < 11; ++i){
@@ -333,8 +341,7 @@ function new_config(T, q, q_near){
         else if (i == 1 || i == 3 || i == 5) q_n[i] = 0;
         else{
             var diff = q[i] - T.vertices[q_near].vertex[i];
-            if(diff >= epsAng) q_n[i] = T.vertices[q_near].vertex[i] + epsAng;
-            else q_n[i] = T.vertices[q_near].vertex[i] + diff;
+            q_n[i] = epsAng * diff;
         }
     }
 
@@ -359,18 +366,12 @@ function calcDist(A,B){
 }
 
 function find_path(a,b){
-    console.log(kineval.motion_plan.length);
+
     if(a.vertex[11] == 1) return;
     a.vertex[11] = 1;
     kineval.motion_plan.push(a);
-    var isEnd = true;
 
-    for(var i = 0; i < 11; ++i)
-        if(a[i] != b[i]){
-            isEnd = false;
-        }
-
-    if(isEnd || finished){
+    if(a==b || finished){
         finished = true;
         return kineval.motion_plan;
     }
@@ -379,7 +380,7 @@ function find_path(a,b){
         if(a.edges[neighbor].vertex[11] != 1){
             kineval.motion_plan.push(a.edges[neighbor]);
             find_path(a.edges[neighbor], b);
-            if(finished) return;
+            if(finished) return kineval.motion_plan;
             kineval.motion_plan.pop();
         }
     }

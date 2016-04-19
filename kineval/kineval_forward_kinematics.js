@@ -57,7 +57,6 @@ function traverseFKBase(xform, link){
 
     //set the xform for rendering
     robot.links[link].xform = curXform;
-
     //for keeping this xform around
     var baseXform = curXform;
 

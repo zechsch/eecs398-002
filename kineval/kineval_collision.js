@@ -20,6 +20,7 @@ kineval.robotIsCollision = function robot_iscollision() {
     // test whether geometry of current configuration of robot is in collision with planning world
 
     // form configuration from base location and joint angles
+
     var q_robot_config = [
         robot.origin.xyz[0],
         robot.origin.xyz[1],
@@ -44,7 +45,6 @@ kineval.robotIsCollision = function robot_iscollision() {
 
 
 kineval.poseIsCollision = function robot_collision_test(q) {
-
     // perform collision test of robot geometry against planning world
 
     // test base origin (not extents) against world boundary extents
@@ -56,11 +56,30 @@ kineval.poseIsCollision = function robot_collision_test(q) {
 
     // traverse robot kinematics to test each body for collision
     // STENCIL: implement forward kinematics for collision detection
-    return collision_FK_link(robot.base, robot.links["base"].xform, q);
+    var trans, rotx,roty,rotz, rot, mstack = generate_identity(4);
+    //generate translation and individual axis rotation matricies
+
+    trans = generate_translation_matrix([q[0],q[1],q[2]]);
+    rotx = generate_rotation_matrix_X(q[3]);
+    roty = generate_rotation_matrix_Y(q[4]);
+    rotz = generate_rotation_matrix_Z(q[5]);
+
+
+    //multiply to get overall rotation matrix
+    rot = matrix_multiply(rotx, roty);
+    rot = matrix_multiply(rot, rotz);
+
+
+
+    //create xform from Identity*Translation*Rotation
+    mstack = matrix_multiply(mstack, trans);
+    mstack = matrix_multiply(mstack, rot);
+    return collision_FK_link(robot.base, mstack, q);
 
 }
 
 function collision_FK_link(link,mstack,q) {
+
 
   // this function is part of an FK recursion to test each link
   //   for collisions, along with a joint traversal function for
@@ -127,7 +146,7 @@ function collision_FK_link(link,mstack,q) {
        // STUDENT: create this joint FK traversal function
        local_collision =
          collision_FK_joint(robot.joints[link.children[i]].name,
-             robot.joints[link.children[i]].xform,q)
+             mstack,q)
        if (local_collision)
          return local_collision;
      }
@@ -138,11 +157,35 @@ function collision_FK_link(link,mstack,q) {
 }
 
 function collision_FK_joint(joint, mstack, q){
+    var trans, rotx,roty,rotz, rot, quatrot, mStack = mstack;
 
-    if(typeof robot.joints[joint].child != "undefined"){
+    //generate translation and individual axis rotation matricies
+    trans = generate_translation_matrix(robot.joints[joint].origin.xyz);
+    rotx = generate_rotation_matrix_X(robot.joints[joint].origin.rpy[0]);
+    roty = generate_rotation_matrix_Y(robot.joints[joint].origin.rpy[1]);
+    rotz = generate_rotation_matrix_Z(robot.joints[joint].origin.rpy[2]);
+    rot = matrix_multiply(rotx, roty);
+    rot = matrix_multiply(rot, rotz);
+
+    //THIS FUCKING LINE
+    quatrot = quaternion_from_axisangle(robot.joints[joint].axis, q[q_names[joint]]);
+
+    quatrot = quaternion_normalize(quatrot);
+    quatrot = quaternion_to_rotation_matrix(quatrot);
+    rot = matrix_multiply(rot, quatrot);
+    //multiply by quaternion
+
+    //create xform from Identity*Translation*Rotation
+    mStack = matrix_multiply(mStack, trans);
+    mStack = matrix_multiply(mStack, rot);
+
+    //if the child exists, iterate on it
+    if(typeof robot.joints[joint].child != "undefined")
+        return collision_FK_link(robot.joints[joint].child, mStack, q);
+    /*if(typeof robot.joints[joint].child != "undefined"){
 
         return collision_FK_link(robot.joints[joint].child,
             robot.links[robot.joints[joint].child].xform, q);
     }
-    else return false;
+    else return false;*/
 }
