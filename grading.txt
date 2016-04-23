@@ -19,10 +19,15 @@ Assignment 4: CHECK
 Assignment 5: CHECK
   comment: good work
   comment: MR2 IK Random Trial Score: 54
-Assignment 6: PENDING
+Assignment 6: CHECK
+  comment: excellent work
+  comment: nice color
 Assignment 7: CHECK
   comment: presented during office hours on April 11
 Quiz 1: 31/60
 Quiz 2: 2/15
 Quiz 3: 5/10
 Quiz 4: 9/30
+
+Points: 98.25
+Grade: PENDING
