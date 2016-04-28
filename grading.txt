@@ -21,7 +21,7 @@ Assignment 5: CHECK
   comment: MR2 IK Random Trial Score: 54
 Assignment 6: CHECK
   comment: excellent work
-  comment: nice color
+  comment: nice colors
 Assignment 7: CHECK
   comment: presented during office hours on April 11
 Quiz 1: 31/60
