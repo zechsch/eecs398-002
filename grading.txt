@@ -30,4 +30,4 @@ Quiz 3: 5/10
 Quiz 4: 9/30
 
 Points: 98.25
-Grade: PENDING
+Final Grade: A-
